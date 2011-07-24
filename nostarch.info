@@ -1,0 +1,4 @@
+; $Id$
+name = No Starch custom crap
+description = Custom crap for the nostarch.com site
+core = 6.x

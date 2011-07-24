@@ -1,0 +1,109 @@
+<?php
+// $Id$
+
+
+/*
+ * Doesn't do jack, I guess
+ */
+function nostarch_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#nostarch":
+      $output = '<p>'. t("No Starch Press custom module -- does custom No Starch stuff.  You don't need any help with this.  Seriously.  Get out.") .'</p>';
+      return $output;
+  }
+}
+
+
+/*
+ * Override crappy uc_product CSS stuff
+ */
+function nostarch_init() {
+  drupal_add_css(drupal_get_path('module', 'nostarch') .'/nostarch.css');
+}
+
+
+/*
+ * hook_link() -- use to ADD links to nodes
+ */
+function nostarch_link($type, $object, $teaser = FALSE) {
+
+  // show number of comments under blog post
+  if ($type == 'node' && $object->type == 'blog') {
+    $node = $object; // just to make things less confusing...
+
+    $all = comment_num_all($node->nid);
+    if ($all) {
+      $links['blog_comments'] = array(
+        'title' => format_plural($all, '1 comment', '@count comments'), 
+        'href' => "node/$node->nid", 
+        'attributes' => array('title' => t('Jump to the first comment of this posting.')), 
+        'fragment' => 'comments',
+      );
+    }
+  }
+
+  return $links;
+}
+
+
+/*
+ * hook_link_alter() -- use to REMOVE/MODIFY links from nodes
+ */
+function nostarch_link_alter(&$links, $node) {
+
+  // remove "user's blog" links in blog posts (because they suck and are ugly)
+  if ($node->type == 'blog') {
+    unset($links['blog_usernames_blog']);
+  }
+}
+
+
+/*
+ * Implementation of hook_form_alter()
+ */
+function nostarch_form_alter(&$form, &$form_state, $form_id) {
+  $node = $form['node']['#value'];
+
+  // change "add to cart" to "pre-order" for books in taxonomy category 18
+  if(strcmp(substr($form_id, 0, 28), 'uc_product_add_to_cart_form_') == 0) {
+    if(isset($node->taxonomy[18])) {
+      $form['submit']['#value'] = '  Pre-Order  ';
+    }
+  }
+}
+
+
+/*
+ * Override this so "completed" orders don't show up in the "active orders" view
+ * hook_order_state()
+ */
+/* not really necessary... commenting it out for now
+function nostarch_order_state() {
+  $states[] = array(
+    'id' => 'canceled',
+    'title' => t('Canceled'),
+    'weight' => -20,
+    'scope' => 'specific',
+                    );
+  $states[] = array(
+    'id' => 'in_checkout',
+    'title' => t('In checkout'),
+    'weight' => -10,
+    'scope' => 'specific',
+                      );
+  $states[] = array(
+    'id' => 'post_checkout',
+    'title' => t('Post checkout'),
+    'weight' => 0,
+    'scope' => 'general',
+                      );
+  $states[] = array(
+    'id' => 'completed',
+    'title' => t('Completed'),
+    'weight' => 20,
+    'scope' => 'specific',
+  );
+
+  return $states;
+}
+*/

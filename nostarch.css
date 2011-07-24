@@ -1,0 +1,134 @@
+/*
+ * Minor tweaks to make the No Starch site look better. Many of these are
+ * overriding uc_product or default theme CSS settings
+ */
+
+/* hide superfluous "search this site" text */
+div#search label {
+  display: none;
+}
+
+/* adds 1 pixel border around teaser images on front page */
+img.teaser-image {
+  border: 1px solid black;
+}
+
+/* adds 1 pixel border around images on main product page */
+img.imagecache-product_main_page {
+  border: 1px solid black;
+}
+
+/* alters the images used in the catalog list */
+.imagecache-product_list {
+  float: left;
+  clear: left; 
+  margin-right: 3px;
+  margin-top: 9px;
+  margin-left: 35px;
+}
+.views-field-title {
+  margin-top: 12px;
+}
+
+/* fixes stupid new catalog not being lined up */
+td.col-1 {
+  width: 50%;
+}
+td.col-2 {
+  width: 50%;
+}
+
+td.teaser-node-mc {
+  padding: 0px; /* default is 5, frees up space on front page */
+}
+td.node-mc {
+  padding: 1px; /* default is 10 5, this frees up more space on pages */
+}
+
+div#main {
+  padding: 5px; /* default is 15, this gives extra space on most pages */
+}
+
+td.active {
+  background-color: transparent; /* undo ugly selection of current table column */
+}
+
+.node-add-to-cart {
+/*  float: left; */
+/*  clear: left; */
+  text-align: right; /* floats the button to the right when there's a dropdown */
+  padding-top: 2px; 
+  padding-left: 2px;
+  padding-right: 32px;
+  margin-left: 2px;
+  margin-right: 32px;
+}
+
+.add-to-cart {
+/*  float: right; *//* KF */
+/*  clear: right; *//* KF */
+  text-align: left; /* floats the button to the right when there's a dropdown */
+/*  padding-top: 2px; */
+  padding-left: 2px;
+  /*padding-right: 30px;*/ /** KF */
+  margin-left: 2px;
+}
+
+/* I want to be able to add spreads w/ lightbox... messing w/ this */
+.more-product-images {
+  margin-top: 5px;
+}
+img.imagecache-uc_thumbnail {
+  border: 1px solid black;
+  margin: 2px;
+}
+
+/* keeps additional images from appearing in catalog page... might have to add
+   more if people add more than 5 images (which would be dumb, but hey...). */
+.field-item-1 {
+  display: none;
+}
+.field-item-2 {
+  display: none;
+}
+.field-item-3 {
+  display: none;
+}
+.field-item-4 {
+  display: none;
+}
+.field-item-5 {
+  display: none;
+}
+
+/* I hate them. Be smaller. */
+sup.registered {
+  font-size: 60%;
+}
+
+/*
+ * Starting here, these are specifically overriding defaults in uc_product.css
+ */
+
+.product-image {
+  float: left;
+  clear: right;
+  text-align: center;
+  padding-top: 0px;
+  padding-left: 4px;
+  margin-left: 4px;
+  margin-right: 12px;
+}
+
+.uc-price-display {
+  float: none;
+  clear: none;
+  width: null;
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: normal; 
+  padding-bottom: 4px; 
+  padding-left: 2px;
+  color: #000000;
+  margin-left: 2px;
+}
