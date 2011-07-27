@@ -111,13 +111,41 @@ function nostarch_orders_add_ebooks($order_ids) {
 }
 
 
-// TODO
+/*
+ *  Output order ID and shipping addresses for selected orders. Particularly 
+ *  useful for making mailing labels when dealing with large amounts of orders.
+ *
+ *  TODO: This suffers from the same security issues as the export_orders_csv() 
+ *  function, unfortunately.
+ */
 function nostarch_orders_export_addresses_csv($order_ids) {
+
+  // open the file, give unique name w/ timestamp
+  $fileName = "sites/default/files/bulk_ops_output/addresses-" . time() . ".csv";
+  $fh = fopen($fileName, 'w') or die("oh junk guys, can't open the file");
+
   foreach ($order_ids as $order_id) {
     $order = uc_order_load($order_id);
-    
-    drupal_set_message(t('Hey I guess this worked?'));
+
+    // populate the ubercart token values
+    $values = uc_order_token_values('order', $order);
+  
+    // output semicolon delimited, csv-style
+    $outputString = $values['order-id'] . ";" . $values['order-shipping-address'] . "\n";
+    $outputString = str_replace("<BR />", ";", $outputString); // kill <BR />
+    $outputString = str_replace(" N/A ", " ", $outputString);  // kill N/A
+    $outputString = str_replace("&#039;", "'", $outputString); // replace shitty html w/ real apostrophe
+  
+    // write one line
+    fwrite($fh, $outputString);
   }
+
+  // close the file
+  fclose($fh);
+  
+  // download link
+  $message = 'If all went well, you should be able to download the csv <a href="' . '/' . $fileName . '">here</a>.';
+  drupal_set_message($message);
 }
 
 
@@ -127,7 +155,8 @@ function nostarch_orders_export_addresses_csv($order_ids) {
  *
  * This spits out a CSV in sites/default/files/bulk_ops_output and exposes a 
  * download link to it when finished. Note that this file IS publically 
- * visible, and these should be deleted as soon as they're retrieved.
+ * visible (assuming you know where to look), and these should be deleted as 
+ * soon as they're retrieved.
  *
  * TODO: Deliver the file in a more secure way!
  */
@@ -166,19 +195,19 @@ function nostarch_orders_export_orders_csv($order_ids) {
       // test for tax
       $tax_ret = stripos($item['title'], "tax");
       if($tax_ret !== false) { // there is tax!
-          $tax = strip_tags(uc_price($item['amount'], $context));
+        $tax = strip_tags(uc_price($item['amount'], $context));
       }
         
       // test for shipping
       $ship_ret = stripos($item['title'], "usps");
       if($ship_ret !== false) { // there is shipping!
-          $shipping = strip_tags(uc_price($item['amount'], $context));
+        $shipping = strip_tags(uc_price($item['amount'], $context));
       }
 
       // test for coupon
       $coup_ret = stripos($item['title'], "coupon");
       if($coup_ret !== false) { // there is coupon!
-          $coupon = strip_tags(uc_price($item['amount'], $context));
+        $coupon = strip_tags(uc_price($item['amount'], $context));
       }
     }
 
@@ -196,7 +225,6 @@ function nostarch_orders_export_orders_csv($order_ids) {
   // download link
   $message = 'If all went well, you should be able to download the csv <a href="' . '/' . $fileName . '">here</a>.';
   drupal_set_message($message);
-  //  drupal_set_message(t('Hey I guess this worked?'));
 }
 
 
@@ -210,7 +238,7 @@ function nostarch_orders_export_orders_csv($order_ids) {
 // I guess this doesn't work because the JS is altering it after the page has loaded?
 /*function nostarch_line_item_alter(&$item, $order) {
   if (is_array($item) && $item['type'] == 'tax') {
-    $item['amount'] = 50;
+    $item['amount'] = 50;  // just trying to change it to anything...
   }
 }
  */
