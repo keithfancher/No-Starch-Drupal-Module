@@ -74,6 +74,149 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
 
 
 /*
+ * Implemenation of hook_order_operations()
+ *
+ * This defines the functions that can be called from various views, including 
+ * the "order management" page. Makes processing orders way easier. Actual 
+ * implementation of these functions below.
+ */
+function nostarch_order_operations() {
+  return array(
+    'add_ebooks' => array(
+      'label' => t("Add ebooks to users' accounts"),
+      'callback' => 'nostarch_orders_add_ebooks',
+      'disabled' => TRUE,
+    ),
+    'export_address_csv' => array(
+      'label' => t("Export addresses as a CSV file"),
+      'callback' => 'nostarch_orders_export_addresses_csv',
+      'disabled' => TRUE,
+    ),
+    'export_orders_csv' => array(
+      'label' => t("Export orders as a CSV file"),
+      'callback' => 'nostarch_orders_export_orders_csv',
+      'disabled' => TRUE,
+    ),
+  );    
+}
+
+
+// TODO
+function nostarch_orders_add_ebooks($order_ids) {
+  foreach ($order_ids as $order_id) {
+    $order = uc_order_load($order_id);
+
+    drupal_set_message(t('Hey I guess this worked?'));
+  }
+}
+
+
+// TODO
+function nostarch_orders_export_addresses_csv($order_ids) {
+  foreach ($order_ids as $order_id) {
+    $order = uc_order_load($order_id);
+    
+    drupal_set_message(t('Hey I guess this worked?'));
+  }
+}
+
+
+/*
+ * Output some useful bullshit: order id, subtotal, coupon value, tax, total, 
+ * &c.
+ *
+ * This spits out a CSV in sites/default/files/bulk_ops_output and exposes a 
+ * download link to it when finished. Note that this file IS publically 
+ * visible, and these should be deleted as soon as they're retrieved.
+ *
+ * TODO: Deliver the file in a more secure way!
+ */
+function nostarch_orders_export_orders_csv($order_ids) {
+
+  // open the file, give unique name w/ timestamp
+  $fileName = "sites/default/files/bulk_ops_output/orders-" . time() . ".csv";
+  $fh = fopen($fileName, 'w') or die("oh junk guys, can't open the file");
+
+  // label the CSV columns
+  $col_labels = "ORDER NUM;SUBTOTAL;COUPON AMT;TAX;SHIPPING;ORDER TOTAL\n";
+  fwrite($fh, $col_labels);
+
+  // loop through each order
+  foreach ($order_ids as $order_id) {
+    $order = uc_order_load($order_id);
+
+    // populate the ubercart token values
+    $values = uc_order_token_values('order', $order);
+
+    // used then stripped... stupid
+    $context = array( 'location' => 'order-invoice-line-item',
+                      'subject' => array(
+                      'order' => $order,
+                      ),
+                    );
+
+    // set default values for tax, shipping, and coupons... if the line items 
+    // exist, these values will be overwritten
+    $tax = '$0.00';
+    $shipping = '$0.00';
+    $coupon = '$0.00';
+
+    foreach ($order->line_items as $item) {
+
+      // test for tax
+      $tax_ret = stripos($item['title'], "tax");
+      if($tax_ret !== false) { // there is tax!
+          $tax = strip_tags(uc_price($item['amount'], $context));
+      }
+        
+      // test for shipping
+      $ship_ret = stripos($item['title'], "usps");
+      if($ship_ret !== false) { // there is shipping!
+          $shipping = strip_tags(uc_price($item['amount'], $context));
+      }
+
+      // test for coupon
+      $coup_ret = stripos($item['title'], "coupon");
+      if($coup_ret !== false) { // there is coupon!
+          $coupon = strip_tags(uc_price($item['amount'], $context));
+      }
+    }
+
+    // output semicolon delimited, csv-style
+    // ie: order id;subtotal;coupon;tax;shipping;order total
+    $outputString = $values['order-id'] . ";" . $values['order-subtotal'] . ";" . $coupon . ";" . $tax . ";" . $shipping . ";" . $values['order-total'] . "\n";
+
+    // write one line (order) to the output file
+    fwrite($fh, $outputString);
+  }
+
+  // close the file
+  fclose($fh);
+  
+  // download link
+  $message = 'If all went well, you should be able to download the csv <a href="' . '/' . $fileName . '">here</a>.';
+  drupal_set_message($message);
+  //  drupal_set_message(t('Hey I guess this worked?'));
+}
+
+
+
+/*
+ * Implementation of hook_line_item_alter()
+ *
+ * Use this to actually charge the correct amount of tax, regardless of an 
+ * item's shippability or discounted status
+ */
+// I guess this doesn't work because the JS is altering it after the page has loaded?
+/*function nostarch_line_item_alter(&$item, $order) {
+  if (is_array($item) && $item['type'] == 'tax') {
+    $item['amount'] = 50;
+  }
+}
+ */
+
+
+/*
  * Override this so "completed" orders don't show up in the "active orders" view
  * hook_order_state()
  */
