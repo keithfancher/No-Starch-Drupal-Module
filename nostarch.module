@@ -124,17 +124,49 @@ function nostarch_orders_export_addresses_csv($order_ids) {
   $fileName = "sites/default/files/bulk_ops_output/addresses-" . time() . ".csv";
   $fh = fopen($fileName, 'w') or die("oh junk guys, can't open the file");
 
+  // write headings... used by ShipRush to make life easier
+  $heading = "OrderID;ShippingCompany;ShippingContact;ShippingAddress1;ShippingAddress2;ShippingCity;ShippingState;ShippingCountry;ShippingPostalCode;TotalAmount;TotalWeight;Reference;TrackingNumber\n";
+  fwrite($fh, $heading);
+
   foreach ($order_ids as $order_id) {
     $order = uc_order_load($order_id);
 
-    // populate the ubercart token values
-    $values = uc_order_token_values('order', $order);
-  
+    // uncomment when debugging
+//    $results = print_r($order, true);
+//    drupal_set_message($results);
+
+    $company = $order->delivery_company;
+    $name = $order->delivery_first_name . " " . $order->delivery_last_name;
+    $address1 = $order->delivery_street1;
+    $address2 = $order->delivery_street2;
+    $city = $order->delivery_city;
+    $state = uc_get_zone_code($order->delivery_zone); // states/provinces are stored by numeric code
+    $postal_code = $order->delivery_postal_code;
+
+    // getting the country is a bit more complex...
+    $country_data = uc_get_country_data(array('country_id' => $order->delivery_country));
+    $country = $country_data[0]['country_name'];
+
+    // get shipping amt
+    foreach ($order->line_items as $item) {
+      $ship_ret = stripos($item['title'], "usps");
+      if($ship_ret !== false) { // there is shipping!
+        $shipping = $item['amount'];
+      }
+    }
+
     // output semicolon delimited, csv-style
-    $outputString = $values['order-id'] . ";" . $values['order-shipping-address'] . "\n";
-    $outputString = str_replace("<BR />", ";", $outputString); // kill <BR />
-    $outputString = str_replace(" N/A ", " ", $outputString);  // kill N/A
-    $outputString = str_replace("&#039;", "'", $outputString); // replace shitty html w/ real apostrophe
+    $outputString = $order_id . ";" . $company . ";" . $name . ";" . 
+                    $address1 . ";" . $address2 . ";" . $city . ";" .
+                    $state . ";" . $country . ";" . $postal_code . ";" . 
+                    $shipping . ";" . "" . ";" . "Paperback book\n";
+
+
+    // these are the old token values, not used anymore and not very useful
+//    $outputString = $values['order-id'] . ";" . $values['order-shipping-address'] . "\n";
+//    $outputString = str_replace("<BR />", ";", $outputString); // kill <BR />
+//    $outputString = str_replace(" N/A ", " ", $outputString);  // kill N/A
+//    $outputString = str_replace("&#039;", "'", $outputString); // replace shitty html w/ real apostrophe
   
     // write one line
     fwrite($fh, $outputString);
