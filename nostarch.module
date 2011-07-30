@@ -23,7 +23,7 @@ function nostarch_init() {
 
 
 /*
- * hook_link() -- use to ADD links to nodes
+ * Implementation of hook_link() -- use to ADD links to nodes
  */
 function nostarch_link($type, $object, $teaser = FALSE) {
 
@@ -47,7 +47,7 @@ function nostarch_link($type, $object, $teaser = FALSE) {
 
 
 /*
- * hook_link_alter() -- use to REMOVE/MODIFY links from nodes
+ * Implementation of hook_link_alter() -- use to REMOVE/MODIFY links from nodes
  */
 function nostarch_link_alter(&$links, $node) {
 
@@ -82,11 +82,6 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
  */
 function nostarch_order_operations() {
   return array(
-    'add_ebooks' => array(
-      'label' => t("Add ebooks to users' accounts"),
-      'callback' => 'nostarch_orders_add_ebooks',
-      'disabled' => TRUE,
-    ),
     'export_address_csv' => array(
       'label' => t("Export addresses as a CSV file"),
       'callback' => 'nostarch_orders_export_addresses_csv',
@@ -101,12 +96,114 @@ function nostarch_order_operations() {
 }
 
 
-// TODO
-function nostarch_orders_add_ebooks($order_ids) {
-  foreach ($order_ids as $order_id) {
-    $order = uc_order_load($order_id);
+/*
+ * Implementation of hook_action_info()
+ *
+ * Defines an action that adds ebooks to customers' accounts. It's annoying 
+ * that I have to do this, since I feel like this should be implemented in the 
+ * uc_file module. But it's not. Oh well!
+ *
+ * See also:
+ *   nostarch_add_files_action_form
+ *   nostarch_add_files_action_validate
+ *   nostarch_add_files_action_submit
+ *   nostarch_add_files_action
+ */
+function nostarch_action_info() {
+  $info['nostarch_add_files_action'] = array(
+    'type' => 'system', // TODO: is this right?
+    'description' => 'Add file(s) to users\' accounts',
+    'configurable' => TRUE,
+    'hooks' => array(
+      'any' => TRUE, // TODO: should this be user only? or order?
+    ),
+  );
 
-    drupal_set_message(t('Hey I guess this worked?'));
+  return $info;
+}
+
+
+/*
+ * The form that lets the user select the files to add to the specified accounts.
+ */
+function nostarch_add_files_action_form($context) {
+
+  // Rebuild the file list.
+  uc_file_refresh();
+
+  // Create the list of files able to be attached to this user.
+  $available_files = array();
+
+  // Build an array of available file ids and file names
+  $files = db_query("SELECT * FROM {uc_files} ORDER BY filename ASC");
+  while ($file = db_fetch_object($files)) {
+    if (substr($file->filename, -1) != '/' && substr($file->filename, -1) != '\\') {
+      $available_files[$file->fid] = $file->filename;
+    }
+  }
+
+  // Build the box to select which files to add
+  if (count($available_files)) {
+    $form['file_add'] = array(
+      '#type' => 'select',
+      '#multiple' => TRUE,
+      '#size' => 15,
+      '#title' => t('Add file(s)'),
+      '#description' => t('Select a file to add as a download. Newly added files will inherit the settings at the !url.', array('!url' => l(t('Ubercart file product feature settings page'), 'admin/store/settings/products/edit/features'))),
+      '#options' => $available_files,
+//      '#tree' => TRUE, // this is annoying
+    );
+  }
+
+  // TODO: should there be an else here? a message that says: hey! no files!
+  
+  return $form;
+}
+
+
+/*
+ * Validate the form. This just screws things up when used through views bulk
+ * operations, and running with an empty selection doesn't harm anything.
+ * Leaving it commented out for now.
+ */
+function nostarch_add_files_action_validate($form, $form_state) {
+//  if (!count($form_state['values']['file_add'])) {
+//    form_set_error('file_add', 'Pick some files, man!');
+//  }
+}
+
+
+/*
+ * Submit the form values...
+ */
+function nostarch_add_files_action_submit($form, $form_state) {
+  return array(
+    'file_add' => $form_state['values']['file_add']
+  );
+}
+
+
+/*
+ * The Drupal action that adds files to selected users' accounts. This is where 
+ * the real magic happens.
+ */
+function nostarch_add_files_action($object, $context) {
+  $user_id = $object->uid;
+  $files_to_add = $context['file_add'];
+
+  // load the user object
+  $user = user_load(array('uid' => $user_id));
+
+  // no limits!
+  $limits['download_limit'] = 0;
+  $limits['address_limit'] = 0;
+  $limits['expiration_limit'] = 0;
+
+  foreach ($files_to_add as $file_id) {
+    // Last value is $force_overwrite... keep TRUE if we want to overwrite this 
+    // assignment, reset the limits even if the user already has access? 
+    // Shouldn't matter in our case sense all the limits will always be 0.
+    uc_file_user_renew($file_id, $user, NULL, $limits, TRUE);
   }
 }
 
@@ -135,7 +232,6 @@ function nostarch_orders_export_addresses_csv($order_ids) {
 //    $results = print_r($order, true);
 //    drupal_set_message($results);
 
-    // everything should be in uppercase for some stupid reason
     $company = $order->delivery_company;
     $name = $order->delivery_first_name . " " . $order->delivery_last_name;
     $address1 = $order->delivery_street1;
@@ -158,13 +254,6 @@ function nostarch_orders_export_addresses_csv($order_ids) {
                     "" . ";" . "" . ";" . "Paperback book\n"
                     );
 
-
-    // these are the old token values, not used anymore and not very useful
-//    $outputString = $values['order-id'] . ";" . $values['order-shipping-address'] . "\n";
-//    $outputString = str_replace("<BR />", ";", $outputString); // kill <BR />
-//    $outputString = str_replace(" N/A ", " ", $outputString);  // kill N/A
-//    $outputString = str_replace("&#039;", "'", $outputString); // replace shitty html w/ real apostrophe
-  
     // write one line
     fwrite($fh, $outputString);
   }
@@ -187,7 +276,8 @@ function nostarch_orders_export_addresses_csv($order_ids) {
  * visible (assuming you know where to look), and these should be deleted as 
  * soon as they're retrieved.
  *
- * TODO: Deliver the file in a more secure way!
+ * TODO: Deliver the file in a more secure way! Or just set up a cron job to 
+ * empty that directory periodically.
  */
 function nostarch_orders_export_orders_csv($order_ids) {
 
