@@ -6,7 +6,7 @@
  * Doesn't do jack, I guess
  */
 function nostarch_help($path, $arg) {
-  switch ($path) {
+  switch($path) {
     case "admin/help#nostarch":
       $output = '<p>'. t("No Starch Press custom module -- does custom No Starch stuff.  You don't need any help with this.  Seriously.  Get out.") .'</p>';
       return $output;
@@ -28,11 +28,11 @@ function nostarch_init() {
 function nostarch_link($type, $object, $teaser = FALSE) {
 
   // show number of comments under blog post
-  if ($type == 'node' && $object->type == 'blog') {
+  if($type == 'node' && $object->type == 'blog') {
     $node = $object; // just to make things less confusing...
 
     $all = comment_num_all($node->nid);
-    if ($all) {
+    if($all) {
       $links['blog_comments'] = array(
         'title' => format_plural($all, '1 comment', '@count comments'), 
         'href' => "node/$node->nid", 
@@ -52,7 +52,7 @@ function nostarch_link($type, $object, $teaser = FALSE) {
 function nostarch_link_alter(&$links, $node) {
 
   // remove "user's blog" links in blog posts (because they suck and are ugly)
-  if ($node->type == 'blog') {
+  if($node->type == 'blog') {
     unset($links['blog_usernames_blog']);
   }
 }
@@ -62,13 +62,27 @@ function nostarch_link_alter(&$links, $node) {
  * Implementation of hook_form_alter()
  */
 function nostarch_form_alter(&$form, &$form_state, $form_id) {
-  $node = $form['node']['#value'];
 
   // change "add to cart" to "pre-order" for books in taxonomy category 18
   if(strcmp(substr($form_id, 0, 28), 'uc_product_add_to_cart_form_') == 0) {
+    $node = $form['node']['#value'];
     if(isset($node->taxonomy[18])) {
       $form['submit']['#value'] = '  Pre-Order  ';
     }
+  }
+
+  // hide "hidden" categories in the advanced search page
+  if($form_id == 'search_form') {
+    $voc = taxonomy_get_vocabularies();
+    $hvoc = variable_get('taxonomy_hide_vocabularies', array());
+
+    foreach($hvoc as $vid)
+      unset($form['advanced']['category']['#options'][$voc[$vid]->name]);
+
+    // Also unset the "special" category (5). Users shouldn't see that, but we 
+    // can't hide it using the taxonomy_hide module because it fucks up the 
+    // above check for pre-orders.
+    unset($form['advanced']['category']['#options'][$voc[5]->name]);
   }
 }
 
@@ -136,14 +150,14 @@ function nostarch_add_files_action_form($context) {
 
   // Build an array of available file ids and file names
   $files = db_query("SELECT * FROM {uc_files} ORDER BY filename ASC");
-  while ($file = db_fetch_object($files)) {
-    if (substr($file->filename, -1) != '/' && substr($file->filename, -1) != '\\') {
+  while($file = db_fetch_object($files)) {
+    if(substr($file->filename, -1) != '/' && substr($file->filename, -1) != '\\') {
       $available_files[$file->fid] = $file->filename;
     }
   }
 
   // Build the box to select which files to add
-  if (count($available_files)) {
+  if(count($available_files)) {
     $form['file_add'] = array(
       '#type' => 'select',
       '#multiple' => TRUE,
@@ -199,7 +213,7 @@ function nostarch_add_files_action($object, $context) {
   $limits['address_limit'] = 0;
   $limits['expiration_limit'] = 0;
 
-  foreach ($files_to_add as $file_id) {
+  foreach($files_to_add as $file_id) {
     // Last value is $force_overwrite... keep TRUE if we want to overwrite this 
     // assignment, reset the limits even if the user already has access? 
     // Shouldn't matter in our case sense all the limits will always be 0.
@@ -225,7 +239,7 @@ function nostarch_orders_export_addresses_csv($order_ids) {
   $heading = "OrderID;ShippingCompany;ShippingContact;ShippingAddress1;ShippingAddress2;ShippingCity;ShippingState;ShippingCountry;ShippingPostalCode;TotalAmount;TotalWeight;Reference;TrackingNumber\n";
   fwrite($fh, $heading);
 
-  foreach ($order_ids as $order_id) {
+  foreach($order_ids as $order_id) {
     $order = uc_order_load($order_id);
 
     // uncomment when debugging
@@ -290,7 +304,7 @@ function nostarch_orders_export_orders_csv($order_ids) {
   fwrite($fh, $col_labels);
 
   // loop through each order
-  foreach ($order_ids as $order_id) {
+  foreach($order_ids as $order_id) {
     $order = uc_order_load($order_id);
 
     // populate the ubercart token values
