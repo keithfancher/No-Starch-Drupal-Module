@@ -8,6 +8,11 @@ div#search label {
   display: none;
 }
 
+/* hide stupid unused "tracking numbers" div on order pages */
+div#order-pane-packages {
+  display: none;
+}
+
 /* adds 1 pixel border around teaser images on front page */
 img.teaser-image {
   border: 1px solid black;
