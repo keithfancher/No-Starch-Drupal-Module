@@ -112,6 +112,40 @@ sup.registered {
 }
 
 /*
+ * These are used in the product template. Using underscores in the names so
+ * they won't clash with any ubercart style names.
+ */
+hr.separator {
+  color: #000000;
+  background-color: #000000;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  /* border: #000000 solid 1px; */
+  height: 0px;
+}
+
+div.main_product_container {
+  width: 550px;
+  padding-left: 40px;
+}
+
+div.product_header {
+  padding-left: 20px;
+  padding-top: 10px;
+  height: 230px;
+}
+
+div.product_image_fixed {
+  min-width: 172px;
+  margin: auto;
+  float: left;
+}
+
+div.product_body {
+  float: left;
+}
+
+/*
  * Starting here, these are specifically overriding defaults in uc_product.css
  */
 
