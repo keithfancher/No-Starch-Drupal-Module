@@ -34,9 +34,9 @@ function nostarch_link($type, $object, $teaser = FALSE) {
     $all = comment_num_all($node->nid);
     if($all) {
       $links['blog_comments'] = array(
-        'title' => format_plural($all, '1 comment', '@count comments'), 
-        'href' => "node/$node->nid", 
-        'attributes' => array('title' => t('Jump to the first comment of this posting.')), 
+        'title' => format_plural($all, '1 comment', '@count comments'),
+        'href' => "node/$node->nid",
+        'attributes' => array('title' => t('Jump to the first comment of this posting.')),
         'fragment' => 'comments',
       );
     }
@@ -79,8 +79,8 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
     foreach($hvoc as $vid)
       unset($form['advanced']['category']['#options'][$voc[$vid]->name]);
 
-    // Also unset the "special" category (5). Users shouldn't see that, but we 
-    // can't hide it using the taxonomy_hide module because it fucks up the 
+    // Also unset the "special" category (5). Users shouldn't see that, but we
+    // can't hide it using the taxonomy_hide module because it fucks up the
     // above check for pre-orders.
     unset($form['advanced']['category']['#options'][$voc[5]->name]);
   }
@@ -90,8 +90,8 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
 /*
  * Implemenation of hook_order_operations()
  *
- * This defines the functions that can be called from various views, including 
- * the "order management" page. Makes processing orders way easier. Actual 
+ * This defines the functions that can be called from various views, including
+ * the "order management" page. Makes processing orders way easier. Actual
  * implementation of these functions below.
  */
 function nostarch_order_operations() {
@@ -106,15 +106,15 @@ function nostarch_order_operations() {
       'callback' => 'nostarch_orders_export_orders_csv',
       'disabled' => TRUE,
     ),
-  );    
+  );
 }
 
 
 /*
  * Implementation of hook_action_info()
  *
- * Defines an action that adds ebooks to customers' accounts. It's annoying 
- * that I have to do this, since I feel like this should be implemented in the 
+ * Defines an action that adds ebooks to customers' accounts. It's annoying
+ * that I have to do this, since I feel like this should be implemented in the
  * uc_file module. But it's not. Oh well!
  *
  * See also:
@@ -125,11 +125,11 @@ function nostarch_order_operations() {
  */
 function nostarch_action_info() {
   $info['nostarch_add_files_action'] = array(
-    'type' => 'system', // TODO: is this right?
+    'type' => 'system',
     'description' => 'Add file(s) to users\' accounts',
     'configurable' => TRUE,
     'hooks' => array(
-      'any' => TRUE, // TODO: should this be user only? or order?
+      'any' => TRUE,
     ),
   );
 
@@ -169,8 +169,8 @@ function nostarch_add_files_action_form($context) {
     );
   }
 
-  // TODO: should there be an else here? a message that says: hey! no files!
-  
+  // TODO: A message that says: "Hey! No files!"
+
   return $form;
 }
 
@@ -198,7 +198,7 @@ function nostarch_add_files_action_submit($form, $form_state) {
 
 
 /*
- * The Drupal action that adds files to selected users' accounts. This is where 
+ * The Drupal action that adds files to selected users' accounts. This is where
  * the real magic happens.
  */
 function nostarch_add_files_action($object, $context) {
@@ -214,8 +214,8 @@ function nostarch_add_files_action($object, $context) {
   $limits['expiration_limit'] = 0;
 
   foreach($files_to_add as $file_id) {
-    // Last value is $force_overwrite... keep TRUE if we want to overwrite this 
-    // assignment, reset the limits even if the user already has access? 
+    // Last value is $force_overwrite... keep TRUE if we want to overwrite this
+    // assignment, reset the limits even if the user already has access?
     // Shouldn't matter in our case sense all the limits will always be 0.
     uc_file_user_renew($file_id, $user, NULL, $limits, TRUE);
   }
@@ -223,11 +223,13 @@ function nostarch_add_files_action($object, $context) {
 
 
 /*
- *  Output order ID and shipping addresses for selected orders. Particularly 
- *  useful for making mailing labels when dealing with large amounts of orders.
+ * Output order ID and shipping addresses for selected orders. Particularly
+ * useful for making mailing labels when dealing with large amounts of orders.
  *
- *  TODO: This suffers from the same security issues as the export_orders_csv() 
- *  function, unfortunately.
+ * This spits out a CSV in sites/default/files/bulk_ops_output and exposes a
+ * download link to it when finished. Note that this file is "safe" from prying
+ * eyes due to the filename and location, but you should still delete it or
+ * move it once it's retrieved.
  */
 function nostarch_orders_export_addresses_csv($order_ids) {
 
@@ -262,9 +264,9 @@ function nostarch_orders_export_addresses_csv($order_ids) {
     // Some of these ("TotalAmount" for instance) are mystery fields...
     // Also, everything should be uppercase for some stupid reason
     $outputString = strtoupper(
-                    $order_id . ";" . $company . ";" . $name . ";" . 
+                    $order_id . ";" . $company . ";" . $name . ";" .
                     $address1 . ";" . $address2 . ";" . $city . ";" .
-                    $state . ";" . $country . ";" . $postal_code . ";" . 
+                    $state . ";" . $country . ";" . $postal_code . ";" .
                     "" . ";" . "" . ";" . "Paperback book\n"
                     );
 
@@ -274,7 +276,7 @@ function nostarch_orders_export_addresses_csv($order_ids) {
 
   // close the file
   fclose($fh);
-  
+
   // download link
   $message = 'If all went well, you should be able to download the csv <a href="' . '/' . $fileName . '">here</a>.';
   drupal_set_message($message);
@@ -282,16 +284,13 @@ function nostarch_orders_export_addresses_csv($order_ids) {
 
 
 /*
- * Output some useful bullshit: order id, subtotal, coupon value, tax, total, 
+ * Output some useful bullshit: order id, subtotal, coupon value, tax, total,
  * &c.
  *
- * This spits out a CSV in sites/default/files/bulk_ops_output and exposes a 
- * download link to it when finished. Note that this file IS publically 
- * visible (assuming you know where to look), and these should be deleted as 
- * soon as they're retrieved.
- *
- * TODO: Deliver the file in a more secure way! Or just set up a cron job to 
- * empty that directory periodically.
+ * This spits out a CSV in sites/default/files/bulk_ops_output and exposes a
+ * download link to it when finished. Note that this file is "safe" from prying
+ * eyes due to the filename and location, but you should still delete it or
+ * move it once it's retrieved.
  */
 function nostarch_orders_export_orders_csv($order_ids) {
 
@@ -317,7 +316,7 @@ function nostarch_orders_export_orders_csv($order_ids) {
                       ),
                     );
 
-    // set default values for tax, shipping, and coupons... if the line items 
+    // set default values for tax, shipping, and coupons... if the line items
     // exist, these values will be overwritten
     $tax = '$0.00';
     $shipping = '$0.00';
@@ -330,7 +329,7 @@ function nostarch_orders_export_orders_csv($order_ids) {
       if($tax_ret !== false) { // there is tax!
         $tax = strip_tags(uc_price($item['amount'], $context));
       }
-        
+
       // test for shipping
       $ship_ret = stripos($item['title'], "usps");
       if($ship_ret !== false) { // there is shipping!
@@ -354,60 +353,24 @@ function nostarch_orders_export_orders_csv($order_ids) {
 
   // close the file
   fclose($fh);
-  
+
   // download link
   $message = 'If all went well, you should be able to download the csv <a href="' . '/' . $fileName . '">here</a>.';
   drupal_set_message($message);
 }
 
 
-
 /*
  * Implementation of hook_line_item_alter()
- *
- * Use this to actually charge the correct amount of tax, regardless of an 
- * item's shippability or discounted status
  */
-// I guess this doesn't work because the JS is altering it after the page has loaded?
-/*function nostarch_line_item_alter(&$item, $order) {
-  if (is_array($item) && $item['type'] == 'tax') {
-    $item['amount'] = 50;  // just trying to change it to anything...
-  }
+function nostarch_line_item_alter(&$item, $order) {
+  // Trying to use this to actually charge correct amount of tax, regardless of
+  // an item's shippability or discount status. It doesn't seem to work -- I'm
+  // assuming because the uc_taxes module's JS is altering the value after this
+  // hook runs?
+  //
+  // TODO: patch fucking uc_taxes.
+//  if (is_array($item) && $item['type'] == 'tax') {
+//    $item['amount'] = 50;  // just trying to change it to anything...
+//  }
 }
- */
-
-
-/*
- * Override this so "completed" orders don't show up in the "active orders" view
- * hook_order_state()
- */
-/* not really necessary... commenting it out for now
-function nostarch_order_state() {
-  $states[] = array(
-    'id' => 'canceled',
-    'title' => t('Canceled'),
-    'weight' => -20,
-    'scope' => 'specific',
-                    );
-  $states[] = array(
-    'id' => 'in_checkout',
-    'title' => t('In checkout'),
-    'weight' => -10,
-    'scope' => 'specific',
-                      );
-  $states[] = array(
-    'id' => 'post_checkout',
-    'title' => t('Post checkout'),
-    'weight' => 0,
-    'scope' => 'general',
-                      );
-  $states[] = array(
-    'id' => 'completed',
-    'title' => t('Completed'),
-    'weight' => 20,
-    'scope' => 'specific',
-  );
-
-  return $states;
-}
-*/

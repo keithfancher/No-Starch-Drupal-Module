@@ -26,7 +26,7 @@ img.imagecache-product_main_page {
 /* alters the images used in the catalog list */
 .imagecache-product_list {
   float: left;
-  clear: left; 
+  clear: left;
   margin-right: 3px;
   margin-top: 9px;
   margin-left: 35px;
@@ -59,10 +59,8 @@ td.active {
 }
 
 .node-add-to-cart {
-/*  float: left; */
-/*  clear: left; */
-  text-align: right; /* floats the button to the right when there's a dropdown */
-  padding-top: 2px; 
+  text-align: right; /* floats button to the right when there's a dropdown */
+  padding-top: 2px;
   padding-left: 2px;
   padding-right: 32px;
   margin-left: 2px;
@@ -70,12 +68,8 @@ td.active {
 }
 
 .add-to-cart {
-/*  float: right; *//* KF */
-/*  clear: right; *//* KF */
-  text-align: left; /* floats the button to the right when there's a dropdown */
-/*  padding-top: 2px; */
+  text-align: left; /* floats button to the right when there's a dropdown */
   padding-left: 2px;
-  /*padding-right: 30px;*/ /** KF */
   margin-left: 2px;
 }
 
@@ -165,8 +159,8 @@ div.product_body {
   width: null;
   text-align: center;
   font-size: 1.2em;
-  font-weight: normal; 
-  padding-bottom: 4px; 
+  font-weight: normal;
+  padding-bottom: 4px;
   padding-left: 2px;
   color: #000000;
   margin-left: 2px;
