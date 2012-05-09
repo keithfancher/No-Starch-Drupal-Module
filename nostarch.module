@@ -23,6 +23,16 @@ function nostarch_init() {
 
 
 /*
+ * Takes a node (note -- NOT a product, but the product's node) and returns 
+ * TRUE if it's a preorder and FALSE otherwise.
+ */
+function nostarch_is_preorder($product_node) {
+  // 18 is preorder...
+  return isset($product_node->taxonomy[18]);
+}
+
+
+/*
  * Implementation of hook_link() -- use to ADD links to nodes
  */
 function nostarch_link($type, $object, $teaser = FALSE) {
@@ -66,7 +76,7 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
   // change "add to cart" to "pre-order" for books in taxonomy category 18
   if(strcmp(substr($form_id, 0, 28), 'uc_product_add_to_cart_form_') == 0) {
     $node = $form['node']['#value'];
-    if(isset($node->taxonomy[18])) {
+    if(nostarch_is_preorder($node)) {
       $form['submit']['#value'] = '  Pre-Order  ';
     }
   }
