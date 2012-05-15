@@ -98,6 +98,22 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
 
 
 /*
+ * Implemenatation of hook_cart_item()
+ */
+function nostarch_cart_item($op, &$item) {
+  switch($op) {
+    case 'load':
+      $product_node = node_load($item->nid);
+      // indicate pre-orders in the cart
+      if(nostarch_is_preorder($product_node)) {
+        $item->title = $item->title . " (PRE-ORDER)";
+      }
+      break;
+  }
+}
+
+
+/*
  * Allows for a discount to be modified when it's being loaded/saved/deleted
  *
  * @param $op The discount operation: load, save, or delete
