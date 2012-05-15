@@ -23,7 +23,7 @@ function nostarch_init() {
 
 
 /*
- * Takes a node (note -- NOT a product, but the product's node) and returns 
+ * Takes a node (note -- NOT a product, but the product's node) and returns
  * TRUE if it's a preorder and FALSE otherwise.
  */
 function nostarch_is_preorder($product_node) {
@@ -93,6 +93,35 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
     // can't hide it using the taxonomy_hide module because it fucks up the
     // above check for pre-orders.
     unset($form['advanced']['category']['#options'][$voc[5]->name]);
+  }
+}
+
+
+/*
+ * Allows for a discount to be modified when it's being loaded/saved/deleted
+ *
+ * @param $op The discount operation: load, save, or delete
+ * @param $arg2 Optional argument.  Order object is passed in when discounts
+ *     for an order are being calculated.
+ */
+function nostarch_uc_discount($op, &$discount, $arg2 = NULL) {
+  switch($op) {
+    case 'load':
+      // Modify a discount to not be applied unless a condition passes
+      if(!is_null($arg2)) {
+        $order = $arg2;
+        if(is_array($order->products) && !empty($order->products)) {
+          foreach($order->products as $product) {
+            // If there's a product kit in the order, don't apply discount.
+            // TODO: still apply discount to non-product-kit products instead
+            // of this catch-all approach.
+            if(!empty($product->data['kit_id'])) {
+              $discount->is_active = FALSE;
+            }
+          }
+        }
+      }
+      break;
   }
 }
 
