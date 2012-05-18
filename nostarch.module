@@ -161,6 +161,26 @@ function nostarch_order_operations() {
       'callback' => 'nostarch_orders_export_orders_csv',
       'disabled' => TRUE,
     ),
+    'set_orders_completed' => array(
+      'label' => t("Set order status to Completed"),
+      'callback' => 'nostarch_orders_set_status_completed',
+      'disabled' => TRUE,
+    ),
+    'set_orders_pre_pre_ship' => array(
+      'label' => t("Set order status to Pre-order pending"),
+      'callback' => 'nostarch_orders_set_status_pre_pre_ship',
+      'disabled' => TRUE,
+    ),
+    'set_orders_pre_ship' => array(
+      'label' => t("Set order status to Pre-order awaiting shipment"),
+      'callback' => 'nostarch_orders_set_status_pre_ship',
+      'disabled' => TRUE,
+    ),
+    'set_orders_canceled' => array(
+      'label' => t("Set order status to Canceled"),
+      'callback' => 'nostarch_orders_set_status_canceled',
+      'disabled' => TRUE,
+    ),
   );
 }
 
@@ -412,6 +432,44 @@ function nostarch_orders_export_orders_csv($order_ids) {
   // download link
   $message = 'If all went well, you should be able to download the csv <a href="' . '/' . $fileName . '">here</a>.';
   drupal_set_message($message);
+}
+
+
+/*
+ * A lil helper to set order statuses
+ */
+function nostarch_set_order_status($order_id, $status) {
+  $order = uc_order_load($order_id);
+  $order->order_status = $status;
+  uc_order_save($order);
+}
+
+
+/*
+ * Set order statuses in bulk
+ *
+ * TODO: make it easier to set arbitrary statuses rather than hard-coding them 
+ * like this.
+ */
+function nostarch_orders_set_status_completed($order_ids) {
+  foreach($order_ids as $order_id) {
+    nostarch_set_order_status($order_id, "completed");
+  }
+}
+function nostarch_orders_set_status_pre_pre_ship($order_ids) {
+  foreach($order_ids as $order_id) {
+    nostarch_set_order_status($order_id, "pre-pre_ship");
+  }
+}
+function nostarch_orders_set_status_pre_ship($order_ids) {
+  foreach($order_ids as $order_id) {
+    nostarch_set_order_status($order_id, "pre_ship");
+  }
+}
+function nostarch_orders_set_status_canceled($order_ids) {
+  foreach($order_ids as $order_id) {
+    nostarch_set_order_status($order_id, "canceled");
+  }
 }
 
 
