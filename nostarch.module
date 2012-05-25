@@ -33,6 +33,85 @@ function nostarch_is_preorder($product_node) {
 
 
 /*
+ * Checks if the current cart contains any pre-orders... useful if we don't
+ * have an order object handy.
+ */
+function nostarch_cart_contains_preorders($items) {
+  foreach($items as $item) {
+    // is it a pre-order?
+    $product_node = node_load($item->nid);
+    if(nostarch_is_preorder($product_node)) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+
+/*
+ * Checks if the current cart is a valid pre-order order... useful if we don't
+ * have an order object handy.
+ */
+function nostarch_cart_is_valid_preorder($items) {
+  $cart_contains_pre_orders = FALSE;
+  $product_count = 0; // only count products, not other line items
+  foreach($items as $item) {
+    // don't count coupons or other line items
+    if($item->module == 'uc_product') {
+      $product_count++;
+    }
+
+    // is it a pre-order?
+    $product_node = node_load($item->nid);
+    if(nostarch_is_preorder($product_node)) {
+      $cart_contains_pre_orders = TRUE;
+    }
+  }
+
+  if($product_count == 1 && $cart_contains_pre_orders) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+
+/*
+ * Returns TRUE if the given order contains one or more pre-order items, FALSE
+ * otherwise.
+ */
+function nostarch_order_contains_preorders($order) {
+  foreach($order->products as $prod) {
+    $prod_node = node_load($prod->nid);
+    if(nostarch_is_preorder($prod_node)) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+
+/*
+ * Takes an order object and returns TRUE if it's a valid pre-order... right
+ * now that means there is only one product and that product is a pre-order.
+ */
+function nostarch_is_valid_preorder($order) {
+  // more than one product isn't valid (yet!)
+  if($order->product_count == 1) {
+    $prod = $order->products[0]; // load the one product
+    if(nostarch_is_preorder(node_load($prod->nid))) { // it's a pre-order
+      return TRUE; // one product, a preorder
+    }
+  }
+
+  return FALSE;
+}
+
+
+/*
  * Implementation of hook_link() -- use to ADD links to nodes
  */
 function nostarch_link($type, $object, $teaser = FALSE) {
@@ -94,6 +173,21 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
     // above check for pre-orders.
     unset($form['advanced']['category']['#options'][$voc[5]->name]);
   }
+
+  // if we're at the checkout page
+  if($form_id == 'uc_cart_checkout_form') {
+    $items = uc_cart_get_contents();
+    if(nostarch_cart_contains_preorders($items)) {
+      if(!nostarch_cart_is_valid_preorder($items)) {
+        drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
+      }
+    }
+
+    // Might unset Paypal as an option if they have a pre-order...
+    // USEFUL FOR DEBUGGING:
+    // drupal_set_message(print_r($form['panes']['payment']['payment_method']['#options']));
+    // drupal_set_message(print_r($form));
+  }
 }
 
 
@@ -107,6 +201,58 @@ function nostarch_cart_item($op, &$item) {
       // indicate pre-orders in the cart
       if(nostarch_is_preorder($product_node)) {
         $item->title = $item->title . " (PRE-ORDER)";
+      }
+      break;
+  }
+}
+
+
+/*
+ * Implementation of hook_cart_pane()
+ *
+ * Using this to check for pre-orders when we're in the cart. Can't use
+ * hook_order() for this since that isn't called until the order is created
+ * (which doesn't happen until payment info is entered)
+ *
+ * Note that this is a bit of a hack -- we're not creating or returning any
+ * panes here.
+ */
+function nostarch_cart_pane($items) {
+  if(nostarch_cart_contains_preorders($items)) {
+    if(!nostarch_cart_is_valid_preorder($items)) {
+      drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
+    }
+  }
+}
+
+
+/*
+ * Implementation of hook_order()
+ */
+function nostarch_order($op, &$arg1, $arg2) {
+  switch($op) {
+    case 'load':
+    case 'new':
+      if(nostarch_order_contains_preorders($arg1)) {
+        if(!nostarch_is_valid_preorder($arg1)) {
+          drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
+        }
+        else {
+          // it IS a valid pre-order... check for payment method!
+          if($arg1->payment_method == 'paypal_wps') {
+            drupal_set_message('<strong>WARNING: If you pay with Paypal, we have to charge you immediately&mdash;we can NOT wait until your item ships to charge you. This is a limitation put in place by PayPal.<br><br> If you do not want to be charged until your pre-ordered item ships, please hit the Back button below and choose to pay by credit card.</strong>', 'warning', FALSE);
+          }
+        }
+      }
+      break;
+
+    case 'submit':
+      // if they click the final "submit order" button anyway, don't process
+      // their payment and warn them again
+      if(nostarch_order_contains_preorders($arg1)) {
+        if(!nostarch_is_valid_preorder($arg1)) {
+          return array(array('pass' => FALSE, 'message' => '<strong>YOUR ORDER WAS NOT COMPLETED; YOU WERE NOT CHARGED.</strong>'));
+        }
       }
       break;
   }
@@ -213,7 +359,8 @@ function nostarch_action_info() {
 
 
 /*
- * The form that lets the user select the files to add to the specified accounts.
+ * The form that lets the user select the files to add to the specified
+ * accounts.
  */
 function nostarch_add_files_action_form($context) {
 
@@ -448,7 +595,7 @@ function nostarch_set_order_status($order_id, $status) {
 /*
  * Set order statuses in bulk
  *
- * TODO: make it easier to set arbitrary statuses rather than hard-coding them 
+ * TODO: make it easier to set arbitrary statuses rather than hard-coding them
  * like this.
  */
 function nostarch_orders_set_status_completed($order_ids) {
@@ -470,20 +617,4 @@ function nostarch_orders_set_status_canceled($order_ids) {
   foreach($order_ids as $order_id) {
     nostarch_set_order_status($order_id, "canceled");
   }
-}
-
-
-/*
- * Implementation of hook_line_item_alter()
- */
-function nostarch_line_item_alter(&$item, $order) {
-  // Trying to use this to actually charge correct amount of tax, regardless of
-  // an item's shippability or discount status. It doesn't seem to work -- I'm
-  // assuming because the uc_taxes module's JS is altering the value after this
-  // hook runs?
-  //
-  // TODO: patch fucking uc_taxes.
-//  if (is_array($item) && $item['type'] == 'tax') {
-//    $item['amount'] = 50;  // just trying to change it to anything...
-//  }
 }
