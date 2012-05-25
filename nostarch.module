@@ -34,9 +34,14 @@ function nostarch_is_preorder($product_node) {
 
 /*
  * Checks if the current cart contains any pre-orders... useful if we don't
- * have an order object handy.
+ * have an order object handy. Can pass it an array of items, or it will just 
+ * use whatever's in the current shopping cart if no argument passed.
  */
-function nostarch_cart_contains_preorders($items) {
+function nostarch_cart_contains_preorders($items=NULL) {
+  if(!$items) {
+    $items = uc_cart_get_contents();
+  }
+
   foreach($items as $item) {
     // is it a pre-order?
     $product_node = node_load($item->nid);
@@ -51,9 +56,14 @@ function nostarch_cart_contains_preorders($items) {
 
 /*
  * Checks if the current cart is a valid pre-order order... useful if we don't
- * have an order object handy.
+ * have an order object handy. Can pass it an array of items, or it will just 
+ * use whatever's in the current shopping cart if no argument passed.
  */
-function nostarch_cart_is_valid_preorder($items) {
+function nostarch_cart_is_valid_preorder($items=NULL) {
+  if(!$items) {
+    $items = uc_cart_get_contents();
+  }
+
   $cart_contains_pre_orders = FALSE;
   $product_count = 0; // only count products, not other line items
   foreach($items as $item) {
@@ -176,9 +186,8 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
 
   // if we're at the checkout page
   if($form_id == 'uc_cart_checkout_form') {
-    $items = uc_cart_get_contents();
-    if(nostarch_cart_contains_preorders($items)) {
-      if(!nostarch_cart_is_valid_preorder($items)) {
+    if(nostarch_cart_contains_preorders()) {
+      if(!nostarch_cart_is_valid_preorder()) {
         drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
       }
     }
@@ -215,7 +224,7 @@ function nostarch_cart_item($op, &$item) {
  * (which doesn't happen until payment info is entered)
  *
  * Note that this is a bit of a hack -- we're not creating or returning any
- * panes here.
+ * panes here. Move this to nostarch_form_alter()?
  */
 function nostarch_cart_pane($items) {
   if(nostarch_cart_contains_preorders($items)) {
@@ -229,17 +238,17 @@ function nostarch_cart_pane($items) {
 /*
  * Implementation of hook_order()
  */
-function nostarch_order($op, &$arg1, $arg2) {
+function nostarch_order($op, &$order, $arg2) {
   switch($op) {
     case 'load':
     case 'new':
-      if(nostarch_order_contains_preorders($arg1)) {
-        if(!nostarch_is_valid_preorder($arg1)) {
+      if(nostarch_order_contains_preorders($order)) {
+        if(!nostarch_is_valid_preorder($order)) {
           drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
         }
         else {
           // it IS a valid pre-order... check for payment method!
-          if($arg1->payment_method == 'paypal_wps') {
+          if($order->payment_method == 'paypal_wps') {
             drupal_set_message('<strong>WARNING: If you pay with Paypal, we have to charge you immediately&mdash;we can NOT wait until your item ships to charge you. This is a limitation put in place by PayPal.<br><br> If you do not want to be charged until your pre-ordered item ships, please hit the Back button below and choose to pay by credit card.</strong>', 'warning', FALSE);
           }
         }
@@ -249,8 +258,8 @@ function nostarch_order($op, &$arg1, $arg2) {
     case 'submit':
       // if they click the final "submit order" button anyway, don't process
       // their payment and warn them again
-      if(nostarch_order_contains_preorders($arg1)) {
-        if(!nostarch_is_valid_preorder($arg1)) {
+      if(nostarch_order_contains_preorders($order)) {
+        if(!nostarch_is_valid_preorder($order)) {
           return array(array('pass' => FALSE, 'message' => '<strong>YOUR ORDER WAS NOT COMPLETED; YOU WERE NOT CHARGED.</strong>'));
         }
       }
