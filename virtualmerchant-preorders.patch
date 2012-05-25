@@ -1,0 +1,90 @@
+diff -ur virtualmerchant/virtualmerchant.module virtualmerchant-ktf/virtualmerchant.module
+--- virtualmerchant/virtualmerchant.module	2012-05-07 11:55:14.000000000 -0700
++++ virtualmerchant-ktf/virtualmerchant.module	2012-05-25 14:32:02.856920746 -0700
+@@ -104,6 +104,24 @@
+   // Prepare a description of the order.
+   $description = array();
+ 
++  // KF: check for pre-orders in order, and whether it's a valid order at all
++  $is_valid_preorder = FALSE;
++  if(nostarch_order_contains_preorders($order)) {
++    if(nostarch_is_valid_preorder($order)) {
++      $is_valid_preorder = TRUE;
++    }
++    else {
++      // this is where we should stop the show... we can't process this order
++      $result = array(
++        'success' => FALSE,
++        'message' => "<strong>We're sorry, but your order did not go through. Due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place all pre-orders as separate orders. We apologize for any inconvenience. Note that your credit card was NOT charged for this order.</strong>",
++        'uid' => $user->uid,
++      );
++      return result;
++    }
++  }
++  ////////////////////////////////////////////////////////////////
++
+   foreach ((array) $order->products as $product) {
+     $prod_desc = $product->title .' x'. $product->qty;
+ 
+@@ -165,6 +183,22 @@
+     // 'ssl_receipt_link_url' => url('<front>', array('absolute' => TRUE)),
+   );
+ 
++  // KF /////////////////////////////////////////////////////////////////////
++  if($is_valid_preorder) {
++    // set date forward one year from today
++    $next_year = (string)(date('Y')+1);
++    $payment_date = date('m/d/') . $next_year;
++
++    // faking pre-orders with an "installment plan"... this is the only way for 
++    // VirtualMerchant to store CC info for us without charging the customer
++    $param['ssl_transaction_type'] = 'ccaddinstall';
++    $param['ssl_billing_cycle'] = 'ANNUALLY';
++    $param['ssl_next_payment_date'] = $payment_date;
++//    $param['ssl_skip_payment'] = 'Y'; // not clear what this is...
++    $param['ssl_total_installments'] = '1';
++  }
++  //////////////////////////////////////////////////////////////////////////////
++
+   // Update the order for test mode if enabled.
+   if (variable_get('virtualmerchant_transaction_mode', 'test') != 'production') {
+     $param['ssl_testmode'] = 'TRUE';
+@@ -242,6 +276,14 @@
+     return array('message' => t('@name (@code) - @message.', array('@code' => $response['errorCode'], '@name' => $response['errorName'], '@message' => $response['errorMessage'])), 'success' => FALSE);
+   }
+ 
++  // KF: a fake-out hack since installments don't seem to return ssl_result even when successful
++  if($is_valid_preorder) {
++    if($response['ssl_result_message'] == 'SUCCESS') {
++      $response['ssl_result'] = '0';
++      $response['ssl_txn_id'] = $response['ssl_installment_id'];
++    }
++  }
++
+   if ($response['ssl_result'] != '0') {
+     // Fail the charge with the reason text in the decline message.
+     $result = array(
+@@ -262,6 +304,13 @@
+       'uid' => $user->uid,
+     );
+ 
++    // KF: if this was a pre-order, log it as such and update order status
++    if($is_valid_preorder) {
++      uc_order_comment_save($order->order_id, $user->uid, 'PRE-ORDER SUCCESSFUL, OMG', 'admin');
++      nostarch_set_order_status($order_id, 'pre-pre_ship');
++    }
++    //////////////////////////////////////////////
++
+     // If this was an authorization only transaction...
+     if ($data['txn_type'] == UC_CREDIT_AUTH_ONLY) {
+       // Log the authorization to the order.
+@@ -270,7 +319,8 @@
+   }
+ 
+   // Don't log this as a payment money wasn't actually captured.
+-  if (in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY))) {
++  // KF: also don't log if it's a pre-order
++  if (in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY)) || $is_valid_preorder) {
+     $result['log_payment'] = FALSE;
+   }
+ 
