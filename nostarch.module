@@ -34,7 +34,7 @@ function nostarch_is_preorder($product_node) {
 
 /*
  * Checks if the current cart contains any pre-orders... useful if we don't
- * have an order object handy. Can pass it an array of items, or it will just 
+ * have an order object handy. Can pass it an array of items, or it will just
  * use whatever's in the current shopping cart if no argument passed.
  */
 function nostarch_cart_contains_preorders($items=NULL) {
@@ -56,7 +56,7 @@ function nostarch_cart_contains_preorders($items=NULL) {
 
 /*
  * Checks if the current cart is a valid pre-order order... useful if we don't
- * have an order object handy. Can pass it an array of items, or it will just 
+ * have an order object handy. Can pass it an array of items, or it will just
  * use whatever's in the current shopping cart if no argument passed.
  */
 function nostarch_cart_is_valid_preorder($items=NULL) {
@@ -250,6 +250,24 @@ function nostarch_cart_pane($items) {
       drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
     }
   }
+
+  // check for one or two manga guides in cart and tell the user about the "buy
+  // 2 get 1 free" promo
+  //
+  // TODO: uncomment this when the promo goes live
+  /*
+  $manga_count = 0;
+  foreach($items as $item) {
+    // in manga taxonomy, category 3
+    $product_node = node_load($item->nid);
+    if(isset($product_node->taxonomy[3])) {
+      $manga_count++;
+    }
+  }
+  if($manga_count == 1 || $manga_count == 2) {
+    drupal_set_message('<em>Psst. Hey!</em> If you buy 2 Manga Guides, you\'ll get a third one free. Why not <a href="/catalog/manga">take another look</a>?', 'warning', FALSE);
+  }
+   */
 }
 
 
@@ -288,10 +306,6 @@ function nostarch_order($op, &$order, $arg2) {
 
 /*
  * Allows for a discount to be modified when it's being loaded/saved/deleted
- *
- * @param $op The discount operation: load, save, or delete
- * @param $order Optional argument.  Order object is passed in when discounts
- *     for an order are being calculated.
  */
 function nostarch_uc_discount($op, &$discount, $order = NULL) {
   switch($op) {
