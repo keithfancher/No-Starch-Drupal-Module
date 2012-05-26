@@ -89,6 +89,24 @@ function nostarch_cart_is_valid_preorder($items=NULL) {
 
 
 /*
+ * Is there a uc_coupon in the cart? TRUE or FALSE!
+ */
+function nostarch_cart_contains_coupon($items=NULL) {
+  if(!$items) {
+    $items = uc_cart_get_contents();
+  }
+
+  foreach($items as $item) {
+    if($item->module == 'uc_coupon') {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+
+/*
  * Returns TRUE if the given order contains one or more pre-order items, FALSE
  * otherwise.
  */
@@ -272,20 +290,25 @@ function nostarch_order($op, &$order, $arg2) {
  * Allows for a discount to be modified when it's being loaded/saved/deleted
  *
  * @param $op The discount operation: load, save, or delete
- * @param $arg2 Optional argument.  Order object is passed in when discounts
+ * @param $order Optional argument.  Order object is passed in when discounts
  *     for an order are being calculated.
  */
-function nostarch_uc_discount($op, &$discount, $arg2 = NULL) {
+function nostarch_uc_discount($op, &$discount, $order = NULL) {
   switch($op) {
     case 'load':
       // Modify a discount to not be applied unless a condition passes
-      if(!is_null($arg2)) {
-        $order = $arg2;
+      if(!is_null($order)) {
+
+        // if there's a uc_coupon discount, don't apply the special discount
+        if(nostarch_cart_contains_coupon()) {
+          $discount->is_active = FALSE;
+        }
+
+        // If there's a product kit in the order, don't apply discount.
+        // TODO: still apply discount to non-product-kit products instead
+        // of this catch-all approach.
         if(is_array($order->products) && !empty($order->products)) {
           foreach($order->products as $product) {
-            // If there's a product kit in the order, don't apply discount.
-            // TODO: still apply discount to non-product-kit products instead
-            // of this catch-all approach.
             if(!empty($product->data['kit_id'])) {
               $discount->is_active = FALSE;
             }
