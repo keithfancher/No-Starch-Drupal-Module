@@ -567,7 +567,7 @@ function nostarch_orders_export_orders_csv($order_ids) {
   $fh = fopen($fileName, 'w') or die("oh junk guys, can't open the file");
 
   // label the CSV columns
-  $col_labels = "ORDER NUM;SUBTOTAL;COUPON AMT;TAX;SHIPPING;ORDER TOTAL\n";
+  $col_labels = "ORDER NUM;SUBTOTAL;COUPON AMT;TAX;SHIPPING;ORDER TOTAL;PRODUCTS\n";
   fwrite($fh, $col_labels);
 
   // loop through each order
@@ -611,9 +611,15 @@ function nostarch_orders_export_orders_csv($order_ids) {
       }
     }
 
+    // now loop through and grab products in order so we can output the SKUs
+    $skus_in_order = ''; // a string, semicolon-delimited
+    foreach($order->products as $product) {
+      $skus_in_order = $skus_in_order . ';' . $product->model;
+    }
+
     // output semicolon delimited, csv-style
     // ie: order id;subtotal;coupon;tax;shipping;order total
-    $outputString = $values['order-id'] . ";" . $values['order-subtotal'] . ";" . $coupon . ";" . $tax . ";" . $shipping . ";" . $values['order-total'] . "\n";
+    $outputString = $values['order-id'] . ";" . $values['order-subtotal'] . ";" . $coupon . ";" . $tax . ";" . $shipping . ";" . $values['order-total'] . $skus_in_order . "\n";
 
     // write one line (order) to the output file
     fwrite($fh, $outputString);
