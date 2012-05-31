@@ -140,6 +140,14 @@ function nostarch_is_valid_preorder($order) {
 
 
 /*
+ * Shows a message about... INVALID PREORDERS!
+ */
+function nostarch_invalid_preorder_message() {
+  drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, each pre-order item must be purchased separately from other items, in its own order. We apologize for any inconvenience this might cause&mdash;we\'re working on getting it fixed!</strong>', 'error', FALSE);
+}
+
+
+/*
  * Implementation of hook_link() -- use to ADD links to nodes
  */
 function nostarch_link($type, $object, $teaser = FALSE) {
@@ -206,7 +214,7 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
   if($form_id == 'uc_cart_checkout_form') {
     if(nostarch_cart_contains_preorders()) {
       if(!nostarch_cart_is_valid_preorder()) {
-        drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
+        nostarch_invalid_preorder_message();
       }
     }
 
@@ -247,7 +255,7 @@ function nostarch_cart_item($op, &$item) {
 function nostarch_cart_pane($items) {
   if(nostarch_cart_contains_preorders($items)) {
     if(!nostarch_cart_is_valid_preorder($items)) {
-      drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
+      nostarch_invalid_preorder_message();
     }
   }
 
@@ -280,7 +288,7 @@ function nostarch_order($op, &$order, $arg2) {
     case 'new':
       if(nostarch_order_contains_preorders($order)) {
         if(!nostarch_is_valid_preorder($order)) {
-          drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, we are only able to process a single pre-order at a time. For the time being, please place pre-orders separately from the rest of your order. We apologize for any inconvenience.</strong>', 'error', FALSE);
+          nostarch_invalid_preorder_message();
         }
         else {
           // it IS a valid pre-order... check for payment method!
