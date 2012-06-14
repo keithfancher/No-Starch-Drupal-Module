@@ -127,8 +127,9 @@ function nostarch_order_contains_preorders($order) {
  * now that means there is only one product and that product is a pre-order.
  */
 function nostarch_is_valid_preorder($order) {
-  // more than one product isn't valid (yet!)
-  if($order->product_count == 1) {
+  // using count() instead of $order->product_count so each product is counted
+  // only once, regardless of the quantity of that product in the order
+  if(count($order->products) == 1) {
     $prod = $order->products[0]; // load the one product
     if(nostarch_is_preorder(node_load($prod->nid))) { // it's a pre-order
       return TRUE; // one product, a preorder
