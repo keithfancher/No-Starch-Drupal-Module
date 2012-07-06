@@ -278,7 +278,7 @@ function nostarch_cart_pane($items) {
 
   // if at least one shippable item tell them about the t-shirt deal
   if(uc_cart_is_shippable()) {
-    drupal_set_message('Hey No Starch fan! If you spend $75 or more we\'ll throw a free NSP t-shirt in with your order! Just tell us your size in the order commments.', 'warning', FALSE);
+    drupal_set_message('Hey No Starch fan! If you spend $75 or more we\'ll throw a free NSP t-shirt in with your order! Just tell us your size in the order commments. (<a class="colorbox-link" href="/cbhtml/tshirtfineprint.htm">fine print</a>)', 'warning', FALSE);
   }
 }
 
