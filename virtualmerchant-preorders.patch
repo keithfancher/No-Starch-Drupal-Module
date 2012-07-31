@@ -71,7 +71,7 @@ diff -ur virtualmerchant/virtualmerchant.module virtualmerchant-ktf/virtualmerch
 +    // KF: if this was a pre-order, log it as such and update order status
 +    if($is_valid_preorder) {
 +      uc_order_comment_save($order->order_id, $user->uid, 'PRE-ORDER SUCCESSFUL, OMG', 'admin');
-+      nostarch_set_order_status($order_id, 'pre-pre_ship');
++      uc_order_update_status($order_id, 'pre-pre_ship');
 +    }
 +    //////////////////////////////////////////////
 +
