@@ -273,7 +273,7 @@ function nostarch_cart_pane($items) {
     }
   }
   if($manga_count == 1 || $manga_count == 2) {
-    drupal_set_message('<em>Psst. Hey!</em> If you buy 2 Manga Guides, you\'ll get a third one free. Why not <a href="/catalog/manga">take another look</a>?', 'warning', FALSE);
+    drupal_set_message('<em>Psst.</em> If you buy 2 Manga Guides, you\'ll get a third one free. Why not <a href="/catalog/manga">take another look</a>?', 'warning', FALSE);
   }
 
   // if at least one shippable item tell them about the t-shirt deal
