@@ -670,3 +670,65 @@ function nostarch_orders_set_status_canceled($order_ids) {
     uc_order_update_status($order_id, "canceled");
   }
 }
+
+
+/*
+ * Shows a list of "related" nodes... in this case, products that are in the
+ * same "catalog" taxonomy (or taxonomies) as the specified node.
+ *
+ * The idea is that this can be easily stuck in a block and shown on product
+ * pages with something like this:
+ *
+ * nostarch_show_related_nodes(nostarch_get_current_node_id(), 5);
+ */
+function nostarch_show_related_nodes($nid, $num_nodes) {
+  // "catalog" is vocabulary number 2
+  $terms = taxonomy_node_get_terms_by_vocabulary(node_load($nid), 2);
+  $sql = "SELECT DISTINCT node.title, node.nid, node.title FROM node, term_node where (node.nid = term_node.nid) and (node.status = 1) AND (";
+  $count = 0;
+
+  foreach($terms as $term){
+    if($count == 0){
+      $sql = $sql . "(term_node.tid = " .$term->tid." )";
+    }
+    else {
+      $sql = $sql . " OR (term_node.tid = " .$term->tid." )";
+    }
+    $count++;
+  }
+
+  $end = ") AND (node.nid != $nid) ORDER BY RAND() LIMIT $num_nodes";
+  $sql = $sql .$end;
+
+  // query!
+  $result = db_query($sql);
+
+  // show some images
+  return nostarch_node_image_list($result);
+}
+
+/*
+ * Similar to Drupal's stock node_title_list() function, but displays images
+ * instead. Like node_title_list(), takes a database query result.
+ */
+function nostarch_node_image_list($result) {
+  $output = '';
+
+  while($node = db_fetch_object($result)) {
+    $node = node_load($node->nid); // load the *actual* node
+    $path = '/sites/default/files/imagecache/product/';
+    $image = $node->field_image_cache[0]['filename'];
+    $output .= '<a href="' . $node->path . '"><img src="' . $path . $image . '" /></a><br />';
+  }
+
+  return $output;
+}
+
+/*
+ * Returns node id for currently viewed node
+ */
+function nostarch_get_current_node_id() {
+  if(arg(0) == 'node' && is_numeric(arg(1))) {
+    return arg(1);
+  }
+}
