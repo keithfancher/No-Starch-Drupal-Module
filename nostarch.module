@@ -262,8 +262,6 @@ function nostarch_cart_pane($items) {
 
   // check for one or two manga guides in cart and tell the user about the "buy
   // 2 get 1 free" promo
-  //
-  // TODO: uncomment this when the promo goes live
   $manga_count = 0;
   foreach($items as $item) {
     // in manga taxonomy, category 3
