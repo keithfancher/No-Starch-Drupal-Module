@@ -718,7 +718,7 @@ function nostarch_node_image_list($result) {
     $node = node_load($node->nid); // load the *actual* node
     $path = '/sites/default/files/imagecache/product/';
     $image = $node->field_image_cache[0]['filename'];
-    $output .= '<a href="' . $node->path . '"><img src="' . $path . $image . '" /></a><br /><br />';
+    $output .= '<a href="' . $node->path . '"><img src="' . $path . $image . '" style="border: 1px solid black;" title="' . $node->title . '"/></a><br /><br />';
   }
 
   return $output;
