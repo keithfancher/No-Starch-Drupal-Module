@@ -687,14 +687,24 @@ function nostarch_show_related_nodes($nid, $num_nodes) {
   $sql = "SELECT DISTINCT node.title, node.nid, node.title FROM node, term_node where (node.nid = term_node.nid) and (node.status = 1) AND (";
   $count = 0;
 
-  foreach($terms as $term){
-    if($count == 0){
-      $sql = $sql . "(term_node.tid = " .$term->tid." )";
+  // If the node doesn't have any taxonomy terms associated with it, just show
+  // some programming books! (That's taxonomy 2.) We have quite a few
+  // intentionally "orphaned" books, and this prevents any SQL unhappiness if a
+  // user views those pages.
+  if(empty($terms)) {
+    $sql = $sql . "(term_node.tid = 2)";
+  }
+  else {
+    // Loop through a product's terms, grab "associated" items
+    foreach($terms as $term){
+      if($count == 0){
+        $sql = $sql . "(term_node.tid = " .$term->tid." )";
+      }
+      else {
+        $sql = $sql . " OR (term_node.tid = " .$term->tid." )";
+      }
+      $count++;
     }
-    else {
-      $sql = $sql . " OR (term_node.tid = " .$term->tid." )";
-    }
-    $count++;
   }
 
   $end = ") AND (node.nid != $nid) ORDER BY RAND() LIMIT $num_nodes";
