@@ -254,6 +254,11 @@ function nostarch_cart_item($op, &$item) {
  * panes here. Move this to nostarch_form_alter()?
  */
 function nostarch_cart_pane($items) {
+  // if there are no items, don't bother!
+  if(!$items) {
+    return;
+  }
+
   if(nostarch_cart_contains_preorders($items)) {
     if(!nostarch_cart_is_valid_preorder($items)) {
       nostarch_invalid_preorder_message();
