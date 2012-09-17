@@ -245,6 +245,47 @@ function nostarch_uc_discount($op, &$discount, $order = NULL) {
 }
 
 
+/**
+ * Implementation of hook_block().
+ * @param string $op one of "list", "view", "save" and "configure"
+ * @param integer $delta code to identify the block
+ * @param array $edit only for "save" operation
+*/
+function nostarch_block($op = 'list', $delta = 0, $edit = array()) {
+  $block = array();
+
+  switch($op) {
+    case 'list':
+      $block[0]['info'] = 'You might also like...';
+      break;
+
+    case 'view':
+      // only show this block on product nodes
+      $nid = nostarch_get_current_node_id();
+      if(nostarch_node_is_product($nid)) {
+        // TODO: make themeable, use CSS for styling, configure number of
+        // related items to show, &c.
+        $block_content = '';
+        $block_content .= '<div style="text-align: center;">';
+        $block_content .= nostarch_show_related_nodes($nid, 5);
+        $block_content .= '</div>';
+
+        $block['subject'] = 'You might also like...';
+        $block['content'] = $block_content;
+      }
+      break;
+
+    case 'save':
+      break;
+
+    case 'configure':
+      break;
+  }
+
+  return $block;
+}
+
+
 /*
  * Shows a list of "related" nodes... in this case, products that are in the
  * same "catalog" taxonomy (or taxonomies) as the specified node.
@@ -292,7 +333,8 @@ function nostarch_show_related_nodes($nid, $num_nodes) {
 
 /*
  * Similar to Drupal's stock node_title_list() function, but displays images
- * instead. Like node_title_list(), takes a database query result.
+ * instead. Like node_title_list(), takes a database query result. TODO:
+ * themeable, &c.
  */
 function nostarch_node_image_list($result) {
   $output = '';
@@ -314,4 +356,16 @@ function nostarch_get_current_node_id() {
   if(arg(0) == 'node' && is_numeric(arg(1))) {
     return arg(1);
   }
+}
+
+/*
+ * Returns TRUE if $nid belongs to a product node, FALSE otherwise.
+ */
+function nostarch_node_is_product($nid) {
+  $node = node_load($nid);
+  if($node->type == 'product') {
+    return TRUE;
+  }
+
+  return FALSE;
 }
