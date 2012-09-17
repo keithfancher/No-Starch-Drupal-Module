@@ -2,8 +2,11 @@
 // $Id$
 
 
+module_load_include('inc', 'nostarch', 'nostarch.preorder');
+
+
 /*
- * Doesn't do jack, I guess
+ * SPANK YOU HELPY HELPERTON
  */
 function nostarch_help($path, $arg) {
   switch($path) {
@@ -23,72 +26,6 @@ function nostarch_init() {
 
 
 /*
- * Takes a node (note -- NOT a product, but the product's node) and returns
- * TRUE if it's a preorder and FALSE otherwise.
- */
-function nostarch_is_preorder($product_node) {
-  // 18 is preorder...
-  return isset($product_node->taxonomy[18]);
-}
-
-
-/*
- * Checks if the current cart contains any pre-orders... useful if we don't
- * have an order object handy. Can pass it an array of items, or it will just
- * use whatever's in the current shopping cart if no argument passed.
- */
-function nostarch_cart_contains_preorders($items=NULL) {
-  if(!$items) {
-    $items = uc_cart_get_contents();
-  }
-
-  foreach($items as $item) {
-    // is it a pre-order?
-    $product_node = node_load($item->nid);
-    if(nostarch_is_preorder($product_node)) {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
-}
-
-
-/*
- * Checks if the current cart is a valid pre-order order... useful if we don't
- * have an order object handy. Can pass it an array of items, or it will just
- * use whatever's in the current shopping cart if no argument passed.
- */
-function nostarch_cart_is_valid_preorder($items=NULL) {
-  if(!$items) {
-    $items = uc_cart_get_contents();
-  }
-
-  $cart_contains_pre_orders = FALSE;
-  $product_count = 0; // only count products, not other line items
-  foreach($items as $item) {
-    // don't count coupons or other line items
-    if($item->module == 'uc_product') {
-      $product_count++;
-    }
-
-    // is it a pre-order?
-    $product_node = node_load($item->nid);
-    if(nostarch_is_preorder($product_node)) {
-      $cart_contains_pre_orders = TRUE;
-    }
-  }
-
-  if($product_count == 1 && $cart_contains_pre_orders) {
-    return TRUE;
-  }
-  else {
-    return FALSE;
-  }
-}
-
-
-/*
  * Is there a uc_coupon in the cart? TRUE or FALSE!
  */
 function nostarch_cart_contains_coupon($items=NULL) {
@@ -103,48 +40,6 @@ function nostarch_cart_contains_coupon($items=NULL) {
   }
 
   return FALSE;
-}
-
-
-/*
- * Returns TRUE if the given order contains one or more pre-order items, FALSE
- * otherwise.
- */
-function nostarch_order_contains_preorders($order) {
-  foreach($order->products as $prod) {
-    $prod_node = node_load($prod->nid);
-    if(nostarch_is_preorder($prod_node)) {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
-}
-
-
-/*
- * Takes an order object and returns TRUE if it's a valid pre-order... right
- * now that means there is only one product and that product is a pre-order.
- */
-function nostarch_is_valid_preorder($order) {
-  // using count() instead of $order->product_count so each product is counted
-  // only once, regardless of the quantity of that product in the order
-  if(count($order->products) == 1) {
-    $prod = $order->products[0]; // load the one product
-    if(nostarch_is_preorder(node_load($prod->nid))) { // it's a pre-order
-      return TRUE; // one product, a preorder
-    }
-  }
-
-  return FALSE;
-}
-
-
-/*
- * Shows a message about... INVALID PREORDERS!
- */
-function nostarch_invalid_preorder_message() {
-  drupal_set_message('<strong>Please note that, due to technical limitations with our payment gateway, each pre-order item must be purchased separately from other items, in its own order. We apologize for any inconvenience this might cause&mdash;we\'re working on getting it fixed!</strong>', 'error', FALSE);
 }
 
 
@@ -545,7 +440,6 @@ function nostarch_orders_export_addresses_csv($order_ids) {
 
     // Output semicolon delimited, csv-style
     // Some of these ("TotalAmount" for instance) are mystery fields...
-    // Also, everything should be uppercase for some stupid reason
     $outputString = strtoupper(
                     $order_id . ";" . $company . ";" . $name . ";" .
                     $address1 . ";" . $address2 . ";" . $city . ";" .
