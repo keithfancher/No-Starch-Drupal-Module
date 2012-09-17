@@ -104,8 +104,12 @@ function nostarch_add_files_action_form($context) {
 //      '#tree' => TRUE, // this is annoying
     );
   }
-
-  // TODO: A message that says: "Hey! No files!"
+  else {
+    $form['file_add'] = array(
+      '#type' => 'markup',
+      '#value' => '<h2>No files here! This isn\'t going to accomplish anything...</h2>',
+    );
+  }
 
   return $form;
 }
