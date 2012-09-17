@@ -263,10 +263,9 @@ function nostarch_block($op = 'list', $delta = 0, $edit = array()) {
       // only show this block on product nodes
       $nid = nostarch_get_current_node_id();
       if(nostarch_node_is_product($nid)) {
-        // TODO: make themeable, use CSS for styling, configure number of
-        // related items to show, &c.
+        // TODO: make themeable, configure number of related items to show, &c.
         $block_content = '';
-        $block_content .= '<div style="text-align: center;">';
+        $block_content .= '<div class="related-items">';
         $block_content .= nostarch_show_related_nodes($nid, 5);
         $block_content .= '</div>';
 
@@ -343,7 +342,7 @@ function nostarch_node_image_list($result) {
     $node = node_load($node->nid); // load the *actual* node
     $path = '/sites/default/files/imagecache/product/';
     $image = $node->field_image_cache[0]['filename'];
-    $output .= '<a href="' . $node->path . '"><img src="' . $path . $image . '" style="border: 1px solid black;" title="' . $node->title . '"/></a><br /><br />';
+    $output .= '<a href="' . $node->path . '"><img src="' . $path . $image . '" class="related-items-image" title="' . $node->title . '"/></a>';
   }
 
   return $output;

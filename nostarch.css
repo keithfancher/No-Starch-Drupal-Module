@@ -3,6 +3,16 @@
  * overriding uc_product or default theme CSS settings
  */
 
+/* make "you might also like..." block purtier */
+div.related-items {
+  text-align: center;
+  padding-top: 10px;
+}
+img.related-items-image {
+  border: 1px solid black;
+  margin-bottom: 15px;
+}
+
 /* hide superfluous "search this site" text */
 div#search label {
   display: none;
