@@ -14,6 +14,7 @@ function nostarch_block($op = 'list', $delta = 0, $edit = array()) {
   switch($op) {
     case 'list':
       $block[0]['info'] = 'You might also like...';
+      $block[0]['cache'] = BLOCK_CACHE_PER_PAGE;
       break;
 
     case 'view':
