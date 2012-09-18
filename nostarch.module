@@ -121,6 +121,12 @@ function nostarch_form_alter(&$form, &$form_state, $form_id) {
     // drupal_set_message(print_r($form['panes']['payment']['payment_method']['#options']));
     // drupal_set_message(print_r($form));
   }
+
+  // editing a product node
+  if($form_id == 'product_node_form') {
+    // collapse annoyingly huge shipping form by default
+    $form['shipping']['#collapsed'] = TRUE;
+  }
 }
 
 

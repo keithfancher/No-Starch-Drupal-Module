@@ -1,15 +1,3 @@
-diff -ur ubercart-2.9/shipping/uc_quote/uc_quote.module ubercart-2.9-ktf/shipping/uc_quote/uc_quote.module
---- ubercart-2.9/shipping/uc_quote/uc_quote.module	2012-04-26 01:48:51.000000000 -0700
-+++ ubercart-2.9-ktf/shipping/uc_quote/uc_quote.module	2012-05-07 15:04:17.022869379 -0700
-@@ -177,6 +177,7 @@
-       '#type' => 'fieldset',
-       '#title' => t('Shipping settings'),
-       '#collapsible' => TRUE,
-+      '#collapsed' => TRUE,
-       '#weight' => module_exists('content') ? content_extra_field_weight($form['#node']->type, 'shipping') : 0,
-       '#attributes' => array('class' => 'product-shipping'),
-     );
-Only in ubercart-2.9-ktf/: ubercart-20120507-2.6-ktf.patch
 diff -ur ubercart-2.9/uc_attribute/uc_attribute.admin.inc ubercart-2.9-ktf/uc_attribute/uc_attribute.admin.inc
 --- ubercart-2.9/uc_attribute/uc_attribute.admin.inc	2012-04-26 01:48:51.000000000 -0700
 +++ ubercart-2.9-ktf/uc_attribute/uc_attribute.admin.inc	2012-05-07 15:04:17.018869356 -0700
