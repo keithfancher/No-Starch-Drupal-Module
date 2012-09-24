@@ -24,11 +24,14 @@ function nostarch_cart_contains_preorders($items=NULL) {
     $items = uc_cart_get_contents();
   }
 
-  foreach($items as $item) {
-    // is it a pre-order?
-    $product_node = node_load($item->nid);
-    if(nostarch_is_preorder($product_node)) {
-      return TRUE;
+  // note: $items is an array even with only a single product in cart
+  if(is_array($items)) {
+    foreach($items as $item) {
+      // is it a pre-order?
+      $product_node = node_load($item->nid);
+      if(nostarch_is_preorder($product_node)) {
+        return TRUE;
+      }
     }
   }
 
@@ -47,17 +50,21 @@ function nostarch_cart_is_valid_preorder($items=NULL) {
   }
 
   $cart_contains_pre_orders = FALSE;
-  $product_count = 0; // only count products, not other line items
-  foreach($items as $item) {
-    // don't count coupons or other line items
-    if($item->module == 'uc_product') {
-      $product_count++;
-    }
+  $product_count = 0;
 
-    // is it a pre-order?
-    $product_node = node_load($item->nid);
-    if(nostarch_is_preorder($product_node)) {
-      $cart_contains_pre_orders = TRUE;
+  // note: $items is an array even with only a single product in cart
+  if(is_array($items)) {
+    foreach($items as $item) {
+      // don't count coupons or other line items
+      if($item->module == 'uc_product') {
+        $product_count++;
+      }
+
+      // is it a pre-order?
+      $product_node = node_load($item->nid);
+      if(nostarch_is_preorder($product_node)) {
+        $cart_contains_pre_orders = TRUE;
+      }
     }
   }
 
@@ -75,10 +82,13 @@ function nostarch_cart_is_valid_preorder($items=NULL) {
  * otherwise.
  */
 function nostarch_order_contains_preorders($order) {
-  foreach($order->products as $prod) {
-    $prod_node = node_load($prod->nid);
-    if(nostarch_is_preorder($prod_node)) {
-      return TRUE;
+  // note: $order->products is an array even with only one product
+  if(is_array($order->products)) {
+    foreach($order->products as $prod) {
+      $prod_node = node_load($prod->nid);
+      if(nostarch_is_preorder($prod_node)) {
+        return TRUE;
+      }
     }
   }
 
