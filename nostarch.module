@@ -182,11 +182,6 @@ function nostarch_cart_pane($items) {
   if($manga_count == 1 || $manga_count == 2) {
     drupal_set_message('<em>Psst.</em> If you buy 2 Manga Guides, you\'ll get a third one free. Why not <a href="/catalog/manga">take another look</a>?', 'warning', FALSE);
   }
-
-  // if at least one shippable item tell them about the t-shirt deal
-  if(uc_cart_is_shippable()) {
-    drupal_set_message('Hey No Starch fan! If you spend $75 or more we\'ll throw a free NSP t-shirt in with your order! Just tell us your size in the order commments. (<a class="colorbox-link" href="/cbhtml/tshirtfineprint.htm">Fine print</a>)', 'warning', FALSE);
-  }
 }
 
 
